@@ -11,26 +11,31 @@ University of Surrey and Microsoft, Reading.
 
 ---
 
-## Resources
+#### Resources
 
 [paper](https://openaccess.thecvf.com/content/WACV2021/html/Liu_Relighting_Images_in_the_Wild_With_a_Self-Supervised_Siamese_Auto-Encoder_WACV_2021_paper.html)
 
 
 ---
 
-## Research Goal
+#### Research Goal
 
 A self-supervised method for relighting of single view images in the wild. 
 
-![goal](assets/goal.png)
+<img src="assets/goal.png" alt="goal" width="300"/>
 
 ---
 
 #### Prior Work  
 
 - Human faces (masked):
-  - Estimating surface normals based on an SFSNet network (an end-to-end learning framework for producing an accurate decomposition of an unconstrained human face image into shape, reflectance and illuminance.)
+  - Estimating surface normals based on an SFSNet network (a framework for decomposing face images into shape, reflectance and illuminance)
   - Jointly estimating facial features and lighting features
+
+---
+
+#### Prior Work  
+
 - Environment images:
   - Most of the previous works need 2D/3D geometric priors or RGB-D sensors
 - Photo style transfer:
@@ -38,11 +43,14 @@ A self-supervised method for relighting of single view images in the wild.
 
 ---
 
-## Key Idea
+#### Key Idea
 
-Train an auto-encoder which decomposes the image into two embeddings: one for illumination and one for content
+- Train an auto-encoder which decomposes an image into two embeddings: 
+  - illumination
+  - content
 
-Motivation: A labelled dataset for supervised learning techniques is not hard to attain.
+- Motivation: 
+  - labelled datasets for supervised learning techniques are hard to attain.
 
 ---
 
@@ -52,7 +60,7 @@ How can we separate illumination from content?
 
 ---
 
-#### Challenge 1: Step 1
+#### Challenge 1: Solution
 
 Augmenting images such that geometry remains the same but lighting direction changes.
 
@@ -60,23 +68,17 @@ Augmenting images such that geometry remains the same but lighting direction cha
 - Rotate images
 - Invert images
 
----
-
-#### Challenge 1: Step 2
-
 Pair up augmented image with original image and train a Siamese auto-encoder network.
-
-The assumption is that each pair of images have the same content but different illumination.
 
 ---
 
 #### Challenge 2
 
-How can we generate semantically meaningful light representation?
+How can we generate a semantically meaningful light representation?
 
 ---
 
-#### Challenge 2: Step 1
+#### Challenge 2: Solution
 
 Design a spherical harmonic loss to force the illumination embedding to take the form of Laplace's spherical harmonics.
 
@@ -90,8 +92,7 @@ In this way, the lighting can be meaningfully controlled.
 
 #### Relighting Auto-encoding
 
-
-![autoencoder](assets/autoencoder.png)
+<img src="assets/autoencoder.png" alt="autoencoder" width="500"/>
 
 If target and source illumination embeddings are the
 same, the network becomes a reconstruction network.
@@ -107,149 +108,134 @@ Three objective functions are used to train the autoencoder:
 
 ---
 
-Reconstruction loss
+#### Reconstruction loss
 
-Since there is no ground truth illumination embedding, a siamese network is used to compute the reconstruction loss.
+There is no ground truth illumination embedding, so a siamese network is used to compute the reconstruction loss.
 
-![siamese](assets/siamese.png)
+<img src="assets/siamese.png" alt="siamese" width="500"/>
 
 The auto-encoders are identical and share weights. 
 
 ---
 
-Reconstruction loss
+#### Reconstruction loss
 
-![siamese](assets/siamese.png)
+- Mean absolute error (MAE) is computed between the images and illumination embeddings. 
+- MAE also computed over image gradients to preserve edges.
 
-Mean absolute error (MAE) is computed for the reconstructed imagese and lighting embeddings. MAE also computed over image gradients for preserve edges.
-
-![recloss](assets/recloss.png)
-
----
-
-Spherical Harmonic loss
-
-Reconstruction loss alone can't guarantee that the network can relight images. 
-
-
+<img src="assets/recloss.png" alt="recloss" width="400"/>
 
 ---
 
-## Probably Symmetric Objects
+#### Spherical Harmonic loss
 
-Assume that depth and albedo are symmetric about a fixed vertical plane.
-
-Then, they require that:
-
-$$d \approx \text{flip} (d')$$
-
-and
-
-$$a \approx \text{flip} (a')$$
+- Reconstruction loss alone can't guarantee that the network can relight images 
+- A loss function based on Spherical Harmonics is introduced
+  - constrains the illumination embedding
 
 ---
 
-In practice, these constraints are used in training by computing a second reconstructed image:
+#### Spherical Harmonic lighting
 
-$$\hat{\mathbf{I}}' = \Pi(\Lambda(a',d',l),d',w)$$
+<img src="assets/sh.png" alt="sphericalharmonics" width="150"/>
+
+$b$ is the bias and its value is set to $\frac{\sqrt{\pi}}{2}$
+
+$X,Y,Z$ means the channels are linearly dependent on the respective axis.
+
+---
+
+#### Spherical Harmonic lighting
+
+Spherical Harmonics of the training data is unknown, BUT we do know how they change when the image is rotated/flipped/inverted.
+
+<img src="assets/shaugmented.png" alt="sphericalharmonics" width="600"/>
 
 
 ---
 
-The model is trained to encourage both 
-$\mathbf{I} \approx \hat{\mathbf{I}}$ and 
-$\mathbf{I} \approx \hat{\mathbf{I}}'$
+#### Spherical Harmonic loss
+
+<img src="assets/shsiamese.png" alt="siamese" width="300"/>
+
+$A$ is an adapted version of $I_L$. 
+
+Spherical Harmonic loss is computed over $\hat{L}$ and $\hat{L}_A$.
 
 ---
 
-## Loss Function
+#### Spherical Harmonic loss
 
-![overview](assets/loss.png)
-
-The same loss is calculated for the symmetric reconstruction, $\mathcal{L}(\hat{\mathbf{I}}', \mathbf{I}, \sigma')$.
+<img src="assets/shloss.png" alt="shloss" width="400"/>
 
 ---
 
-## Loss Function
+#### Discriminator loss
 
-![overview](assets/fullloss.png)
+They argue that image flipping etc. may introduce artifacts.
 
+A GAN loss is added to improve the quality of the generated images.
+
+The GAN is used to force the distribution of local image patches to be close to that of a natural image.
 
 ---
 
-## Image Formation
+#### Overall loss
 
-Nothing unusual.
-
-- Perspective camera with assumed narrow field of view
-- Viewpoint represents a rotation and translation along $x,y,z$
-- Normals are computed, multiplied by light direction and added to ambient illumination.
-- Above is multiplied by albedo to get illuminated texture.
-- Light is represented as a spherical sector
+<img src="assets/loss.png" alt="loss" width="600"/>
 
 
 ---
 
-#### Implementation
+#### Implementation details
 
-- Depth and albedo are generated by (separate) encoder-decoder networks
-  - encoder-decoders do not use skip connections because input and output images are not spatially aligned (since the output is in the canonical viewpoint)
-- Viewpoint and lighting are regressed using simple encoder networks
-- Trained using Adam, 50k iterations
+- Image resolution 1024 x 1024
+- Network consists of downsampling/upsampling layers with residual blocks and skip connections, and fully connected layers to get content and illumination embeddings
 
----
-
-![overview](assets/overview.png)
 
 ---
 
-# Experiments
+#### Experiments
+
+- Datasets
+  - CelebA (train + test)
+  - Youtube 8M (train + test)
+  - Synthetic faces (test only)
+- Metrics
+  - RMSE
+  - Structural dissimilarity (DSSIM)
+  - Scale-invariant RMSE (RMSE-s)
 
 ---
 
-#### Data
+#### Ablation Experiments
 
-- Human face datasets
-  - CelebA, 3DFAW and BFM
-- Cats
-  - Combine two datasets, one with 10k examples and another with 1.2k
-- Cars
-  - Synthetic cars rendered from ShapeNet
+<p float="left">
+  <img src="assets/ablation.png" width="300" />
+  <img src="assets/ablationvisual.png" width="300" /> 
+</p>
 
 ---
 
 #### Results
 
-![results](assets/results.png)<!-- .element height="50%" width="50%" -->
-
-SIDE: Scale-invariant depth error
-
-MAD: Mean angle deviation (normals)
-
----
-
-#### Qualitative Results
-
-![results](assets/qualitative1.png)<!-- .element height="70%" width="70%" -->
-
-
+<p float="left">
+  <img src="assets/reconstruction.png" width="300" />
+  <img src="assets/illumination.png" width="300" /> 
+</p>
 
 ---
 
-#### Qualitative Results
+#### Results
 
-![results](assets/qualitative2.png)<!-- .element height="70%" width="70%" -->
+<img src="assets/background.png" width="300" />
 
 ---
 
-#### Limitations
+#### Comparison to State of the Art
 
-![results](assets/limitations.png)<!-- .element height="70%" width="70%" -->
+<img src="assets/comparison.png" width="300" />
 
-- Fails under extreme lighting
-  - assumes Lambertian shading model (ignores shadow and specularity)
-- Fails with dark, noisy textures
-- Fails with extreme angles
 
 ---
 
