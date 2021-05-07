@@ -234,7 +234,7 @@ The GAN is used to force the distribution of local image patches to be close to 
 
 #### Comparison to State of the Art
 
-<img src="assets/comparison.png" width="300" />
+<img src="assets/comparison.png" width="500" />
 
 
 ---
