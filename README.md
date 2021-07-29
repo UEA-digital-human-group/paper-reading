@@ -1,5 +1,13 @@
 # Paper reading group - slides
 
+Barlow Twins: Self-Supervised Learning via Redundancy Reduction 
+Jure Zbontar, Li Jing, Ishan Misra, Yann LeCun and Stephane Deny 
+ICML 2021 
+[paper](https://arxiv.org/pdf/2103.03230.pdf) 
+[code and models](https://github.com/facebookresearch/barlowtwins) 
+[slides](https://UEA-digital-human-group.github.io/paper-reading/slides/zbontar2021/) 
+
+
 
 Relighting Images in the Wild With a Self-Supervised Siamese Auto-Encoder  
 Yang Liu, Alexandros Neophytou, Sunando Sengupta, Eric Sommerlade  
